@@ -1,5 +1,5 @@
-from pandas import read_csv, to_datetime
 from numpy import nan, sqrt
+from pandas import read_csv, to_datetime
 
 
 def loadHypoDDRelocFile():

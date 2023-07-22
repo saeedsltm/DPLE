@@ -1,14 +1,15 @@
 import os
 import sys
-from yaml import SafeLoader, load
-from pathlib import Path
 from glob import glob
-from numpy import array, nan, sqrt, min, max
-from obspy.geodetics.base import degrees2kilometers as d2k
-from pandas import read_csv, DataFrame, to_datetime, concat
-from numpy import ma, average, where, logspace, append
-from sklearn.preprocessing import MinMaxScaler
+from pathlib import Path
+
+from numpy import (append, array, average, logspace, ma, max, min, nan, sqrt,
+                   where)
 from obspy.clients.fdsn import Client
+from obspy.geodetics.base import degrees2kilometers as d2k
+from pandas import DataFrame, concat, read_csv, to_datetime
+from sklearn.preprocessing import MinMaxScaler
+from yaml import SafeLoader, load
 
 
 def readConfiguration():

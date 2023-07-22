@@ -1,15 +1,19 @@
 import os
-from numpy import array, random, unique, mean, abs, min, max, sqrt, arange, histogram
+from datetime import timedelta as td
+
+import proplot as plt
+from numpy import (abs, arange, array, histogram, max, mean, min, random, sqrt,
+                   unique)
+from obspy import Stream
+from obspy import UTCDateTime as utc
+from obspy import read, read_events
+from obspy.geodetics.base import degrees2kilometers as d2k
+from pandas import DataFrame, Series, date_range, read_csv
+from pyproj import Proj
+from tqdm import tqdm
+
 from core.Extra import handle_masked_arr, weighted_avg_and_std, weightMapper
 from core.PrepareData import prepareInventory
-import proplot as plt
-from pandas import DataFrame, read_csv, Series, date_range
-from pyproj import Proj
-from obspy import read, read_events, Stream
-from obspy import UTCDateTime as utc
-from datetime import timedelta as td
-from tqdm import tqdm
-from obspy.geodetics.base import degrees2kilometers as d2k
 
 
 def plotSeismicity(config):

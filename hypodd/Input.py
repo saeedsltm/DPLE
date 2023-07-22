@@ -1,8 +1,10 @@
-from obspy import read_events
 import os
+
 from core.Extra import getStationMetaData
+from obspy import read_events
 from obspy.geodetics.base import degrees2kilometers as d2k
 from tqdm import tqdm
+
 
 def preparePhaseFile(catalogFile):
     phaseFile = os.path.join("phase.dat")

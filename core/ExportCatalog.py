@@ -1,13 +1,15 @@
-from pandas import read_csv, Series, date_range
-from obspy.core import event
-from obspy import UTCDateTime as utc
-from core.PrepareData import prepareInventory
-from core.Extra import weightMapper
-from pyproj import Proj
 import os
 from datetime import timedelta as td
-from tqdm import tqdm
+
 from numpy import array
+from obspy import UTCDateTime as utc
+from obspy.core import event
+from pandas import Series, date_range, read_csv
+from pyproj import Proj
+from tqdm import tqdm
+
+from core.Extra import weightMapper
+from core.PrepareData import prepareInventory
 
 
 class feedCatalog():

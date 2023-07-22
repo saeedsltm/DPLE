@@ -1,6 +1,7 @@
-from obspy.clients.fdsn.mass_downloader import CircularDomain, \
-    Restrictions, MassDownloader
 from datetime import timedelta as td
+
+from obspy.clients.fdsn.mass_downloader import (CircularDomain, MassDownloader,
+                                                Restrictions)
 from pandas import date_range
 from tqdm import tqdm
 

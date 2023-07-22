@@ -1,11 +1,12 @@
-from core.Extra import handleNone, getRMS, getHer, getZer
-from numpy import nan, round_, mean
-from pandas import DataFrame
+import warnings
+
+from numpy import mean, nan, round_
 from obspy import read_events
+from pandas import DataFrame
 from tqdm import tqdm
 
+from core.Extra import getHer, getRMS, getZer, handleNone
 
-import warnings
 warnings.filterwarnings("ignore")
 
 
@@ -21,7 +22,7 @@ def catalog2xyzm(config, hypInp, catalogFileName):
     outputFile = "xyzm_{catalogFileName:s}.dat".format(
         catalogFileName=catalogFileName.split(".")[0])
     catDict = {}
-    desc = "Convert to xyzm ..."
+    desc = "+++ Converting to xyzm ..."
     for i, event in tqdm(enumerate(cat), desc=desc):
         preferred_origin = event.preferred_origin()
         preferred_magnitude = event.preferred_magnitude()

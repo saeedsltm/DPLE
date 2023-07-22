@@ -1,10 +1,12 @@
-from pathlib import Path
-from glob import glob
 import os
+from glob import glob
+from pathlib import Path
 from shutil import copy
-from tqdm import tqdm
-from hypocenter.Station import toSTATION0HYP
+
 from core.Catalog import catalog2xyzm
+from tqdm import tqdm
+
+from hypocenter.Station import toSTATION0HYP
 
 
 def locateHypocenter(config):

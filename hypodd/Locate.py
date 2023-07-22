@@ -1,11 +1,13 @@
-from hypodd.Input import prepareHypoddInputs
-from hypodd.Extra import writexyzm
-from core.Catalog import catalog2xyzm
 import os
-from pathlib import Path
 from glob import glob
+from pathlib import Path
 from shutil import copy
+
+from core.Catalog import catalog2xyzm
 from tqdm import tqdm
+
+from hypodd.Extra import writexyzm
+from hypodd.Input import prepareHypoddInputs
 
 
 def locateHypoDD(config):
@@ -19,6 +21,7 @@ def locateHypoDD(config):
     desc = "+++ Locate catalog using 'HypoDD' ..."
     for catalogFile in tqdm(glob("hyp.out"), desc=desc):
         outName = catalogFile.split(os.sep)[-1].split(".")[0]
+        outName = "hypoDD"
         prepareHypoddInputs(config,
                             catalogFile,
                             locationPath)

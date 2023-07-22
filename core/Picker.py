@@ -1,16 +1,16 @@
-from datetime import timedelta as td
-from pandas import date_range, DataFrame, Series
-from core.PrepareData import (prepareWaveforms,
-                              prepareInventory,
-                              picks2DF,
-                              applyGaMMaConfig)
 import os
-from tqdm import tqdm
-from gamma.utils import association
-from pyproj import Proj
-import seisbench.models as sbm
-from obspy import read
+from datetime import timedelta as td
 from pathlib import Path
+
+import seisbench.models as sbm
+from gamma.utils import association
+from obspy import read
+from pandas import DataFrame, Series, date_range
+from pyproj import Proj
+from tqdm import tqdm
+
+from core.PrepareData import (applyGaMMaConfig, picks2DF, prepareInventory,
+                              prepareWaveforms)
 
 
 def runSeisBench(config):

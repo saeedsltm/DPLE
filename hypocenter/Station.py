@@ -1,10 +1,10 @@
-from pandas import Series
-from obspy.geodetics.base import degrees2kilometers as d2k
-from numpy import mean, sqrt
 import os
+
 import latlon as ll
-from core.Extra import roundTo
-from core.Extra import getStationMetaData
+from core.Extra import getStationMetaData, roundTo
+from numpy import mean, sqrt
+from obspy.geodetics.base import degrees2kilometers as d2k
+from pandas import Series
 
 
 def toSTATION0HYP(config):

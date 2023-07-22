@@ -1,12 +1,14 @@
 import os
+from glob import glob
+from pathlib import Path
+from shutil import copy
+
 import latlon as ll
 from numpy import nan
-from pandas import to_datetime, Series, read_fwf
-from hypo71.Input import prepareInputFile
-from pathlib import Path
-from glob import glob
+from pandas import Series, read_fwf, to_datetime
 from tqdm import tqdm
-from shutil import copy
+
+from hypo71.Input import prepareInputFile
 
 
 def locateHypo71(config):
@@ -22,6 +24,7 @@ def locateHypo71(config):
     desc = "+++ Locate catalog using 'Hypo71' ..."
     for catalogPath in tqdm(glob("all.out"), desc=desc):
         outName = catalogPath.split(os.sep)[-1].split(".")[0]
+        outName = "hypo71"
         prepareInputFile(config, resetsPath, catalogPath)
         cmd = "Hypo71PC < input.dat >/dev/null 2>/dev/null"
         os.system(cmd)
@@ -72,6 +75,6 @@ def loadhypo71Out(outName):
              "depth_", "HHHH", "mag", "L", "ns", "M", "gap", "N", "dmin", "O",
              "rms_", "erh__", "erz__", "P", "qm"]
     widths = [len(name) for name in names]
-    bulletin_df = read_fwf(f"hyp71_{outName}.out", names=names,
+    bulletin_df = read_fwf(f"{outName}.out", names=names,
                            widths=widths, header=0)
     return bulletin_df

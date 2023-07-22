@@ -1,12 +1,14 @@
-from obspy import read_events
-import latlon as ll
-from numpy import mean, sqrt
-from pandas import Series
-from obspy.geodetics.base import degrees2kilometers as d2k
-from obspy import UTCDateTime as utc
-from core.Extra import roundTo, getPick, getStationMetaData
 import os
 import warnings
+
+import latlon as ll
+from core.Extra import getPick, getStationMetaData, roundTo
+from numpy import mean, sqrt
+from obspy import UTCDateTime as utc
+from obspy import read_events
+from obspy.geodetics.base import degrees2kilometers as d2k
+from pandas import Series
+
 warnings.filterwarnings("ignore")
 
 
@@ -109,6 +111,7 @@ def addArrivals(catalogFile, phaseFile):
 def preparPhaseFile(config, resetsPath, catalogPath):
     outName = catalogPath.split(os.sep)[-1].split(".")[0]
     phasePath = f"phase_{outName}.dat"
+    phasePath = "hypo71.pha"
     station_df = getStationMetaData(config["network"],
                                     "*",
                                     config["starttime"],
@@ -127,7 +130,10 @@ def prepareInputFile(config, resetsPath, catalogPath):
     inputPath = "input.dat"
     outName = catalogPath.split(os.sep)[-1].split(".")[0]
     with open(inputPath, "w") as f:
-        f.write(f"phase_{outName}.dat\n")
-        f.write(f"print_{outName}.out\n")
-        f.write(f"hyp71_{outName}.out\n")
+        # f.write(f"phase_{outName}.dat\n")
+        f.write(f"hypo71.pha\n")
+        # f.write(f"print_{outName}.out\n")
+        f.write(f"print.out\n")
+        # f.write(f"hyp71_{outName}.out\n")
+        f.write(f"hypo71.out\n")
         f.write("\n\n\n")
