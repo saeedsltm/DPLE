@@ -61,8 +61,7 @@ def addControlLine(phaseFile, station_df, VpVs):
             f"{trialDepth:4.0f}.{xNear:4.0f}.{xFar:4.0f}. {VpVs:4.2f}    4    0    0    1    1    0    0 0111\n")
 
 
-def addArrivals(catalogFile, phaseFile):
-    catalog = read_events(catalogFile)
+def addArrivals(catalog, phaseFile):
     phaseLinePSFmt = "{code:4s} P {wP:1.0f} {Part:15s}      {Stt:6s} S {wS:1.0f}          \n"
     phaseLinePFmt = "{code:4s} P {wP:1.0f} {Part:15s}                          \n"
     with open(phaseFile, "a") as f:
@@ -112,17 +111,19 @@ def preparPhaseFile(config, resetsPath, catalogPath):
     outName = catalogPath.split(os.sep)[-1].split(".")[0]
     phasePath = f"phase_{outName}.dat"
     phasePath = "hypo71.pha"
-    station_df = getStationMetaData(config["network"],
+    catalog = read_events(catalogPath)
+    station_df = getStationMetaData(config["networks"],
                                     "*",
                                     config["starttime"],
                                     config["endtime"],
                                     *config["center"],
-                                    config["maxradius"])
+                                    config["maxradius"],
+                                    catalog)
     addResets(phasePath, resetsPath)
     addStation(phasePath, station_df)
     addVelocityModel(config["vp"], config["zz"], phasePath)
     addControlLine(phasePath, station_df, config["vp_vs_ratio"])
-    addArrivals(catalogPath, phasePath)
+    addArrivals(catalog, phasePath)
 
 
 def prepareInputFile(config, resetsPath, catalogPath):

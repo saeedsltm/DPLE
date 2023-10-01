@@ -1,4 +1,4 @@
-from numpy import nan, sqrt
+from numpy import sqrt
 from pandas import read_csv, to_datetime
 
 
@@ -12,7 +12,10 @@ def loadHypoDDRelocFile():
              "NCTP",  "NCTS",
              "RCC",  "RCT",
              "CID "]
-    hypodd_df = read_csv("hypoDD.reloc", delim_whitespace=True, names=names)
+    hypodd_df = read_csv("hypoDD.reloc",
+                         delim_whitespace=True,
+                         names=names,
+                         na_values="********")
     return hypodd_df
 
 

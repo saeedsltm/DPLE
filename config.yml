@@ -1,24 +1,26 @@
 ---
 #============================ Data
-starttime: 2021-12-10T00:00:00
-endtime: 2022-01-20T00:00:00
+starttime: 2023-04-01T00:00:00
+endtime: 2023-05-01T00:00:00
 searchWindow: []
 # Selected region for downloading stations
-center: [56.25, 27.50]
+center: [51.00, 29.00]
 minradius: 0.0
-maxradius: 1.0
+maxradius: 1.5
 # Selected region for appyling picker
-xlim_degree: [55.00, 58.00]
-ylim_degree: [26.00, 29.00]
+xlim_degree: [50.00, 52.00]
+ylim_degree: [28.00, 30.00]
 zlim_degree: [0.0, 50.0]
 # Data restriction
-network: "FN, BI"
+networks: [BP, BI, IR]
 fdsn_urls: ["http://localhost:8080"]
 stations_inv: stations.xml
 picks_file: results/picks.csv
+preprocess_data: true
 #============================ PhaseNet settings
-min_p_prob: 0.5
-min_s_prob: 0.5
+repick_data: true
+min_p_prob: 0.3
+min_s_prob: 0.4
 highpass_filter: 0.0
 model: "original"
 #============================ GaMMA settings
@@ -27,16 +29,16 @@ use_dbscan: true
 method: BGMM
 # Velocity Model, (Acarel et al, 2019)
 useEikonal: true
-zz: [0.0, 2.0, 4.0, 10.0, 14.0, 19.0, 46.0]
-vp: [4.2, 5.4, 5.7,  5.9,  6.1,  6.5,  8.2]
-vp_vs_ratio: 1.75
+zz: [0.0, 5.5, 7.0, 11.0]
+vp: [3.9, 4.9, 5.7,  6.2]
+vp_vs_ratio: 1.81
 h: 3.0
 # DBSCAN
-dbscan_eps: 20 # The maximum time between two neighbor picks
-dbscan_min_samples: 5 # The number neighbor to be considered as a core point
+dbscan_eps: 15 # The maximum time between two neighbor picks
+dbscan_min_samples: 3 # The number neighbor to be considered as a core point
 # Filtering
-min_picks_per_eq: 6
-min_p_picks_per_eq: 5
+min_picks_per_eq: 4
+min_p_picks_per_eq: 3
 min_s_picks_per_eq: 1
 max_sigma11: 1.5 # Max phase time residual (s)
 max_sigma22: 1.0 # Max phase amplitude residual (in log scale)

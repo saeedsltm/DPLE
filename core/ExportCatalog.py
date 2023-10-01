@@ -153,7 +153,7 @@ class feedCatalog():
             arrival = self.setArrival(eventPicks.iloc[p], pick.resource_id)
             picks.append(pick)
             arrivals.append(arrival)
-            if "S" in eventPicks.iloc[p]["type"].upper():
+            if self.config["use_amplitude"] and "S" in eventPicks.iloc[p]["type"].upper():
                 pick_amp = self.setPickAmp(eventPicks.iloc[p])
                 amplitude = self.setAmplitude(
                     eventPicks.iloc[p], pick_amp.resource_id)
@@ -197,8 +197,9 @@ class feedCatalog():
         magnitude = self.setMagnitude(eventInfo, origin)
         Event.origins.append(origin)
         Event.picks = picks
-        Event.amplitudes = amplitudes
-        Event.magnitudes.append(magnitude)
+        if self.config["use_amplitude"]:
+            Event.amplitudes = amplitudes
+            Event.magnitudes.append(magnitude)
         Event.event_type = "earthquake"
         Event.event_type_certainty = "suspected"
         info = event.base.CreationInfo()

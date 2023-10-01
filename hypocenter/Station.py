@@ -7,16 +7,17 @@ from obspy.geodetics.base import degrees2kilometers as d2k
 from pandas import Series
 
 
-def toSTATION0HYP(config):
+def toSTATION0HYP(config, catalog):
     print("+++ Generating STATION0.HYP file ...")
     resetsPath = os.path.join("files", "resets.dat")
     station0hypPath = os.path.join("results", "STATION0.HYP")
-    station_db = getStationMetaData(config["network"],
+    station_db = getStationMetaData(config["networks"],
                                     "*",
                                     config["starttime"],
                                     config["endtime"],
                                     *config["center"],
-                                    config["maxradius"])
+                                    config["maxradius"],
+                                    catalog)
     velocities = config["vp"]
     depths = config["zz"]
     VpVs = config["vp_vs_ratio"]

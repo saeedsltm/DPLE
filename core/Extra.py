@@ -24,6 +24,12 @@ def readConfiguration():
     return config
 
 
+def divide_chunks(List, n):
+    n = int(n)
+    for i in range(0, len(List), n):
+        yield List[i:i + n]
+
+
 def handle_masked_arr(st):
     for tr in st:
         if isinstance(tr.data, ma.masked_array):
@@ -37,6 +43,8 @@ def weighted_avg_and_std(values, weights):
 
     values, weights -- NumPy ndarrays with the same shape.
     """
+    if len(values) == len(weights) == 0:
+        return nan, nan
     avg = average(values, weights=weights)
     variance = average((values-avg)**2, weights=weights)
     return (avg, sqrt(variance))
@@ -138,8 +146,8 @@ def getRMS(arrivals):
             arrival.time_residual, float)
     ])
     time_weights = array([
-        arrival.time_weight for arrival in arrivals if isinstance(
-            arrival.time_weight, float)
+        arrival.time_weight if isinstance(
+            arrival.time_weight, float) else nan for arrival in arrivals
     ])
     if time_residuals.size:
         wrms = sum(time_weights * time_residuals**2) / sum(time_weights)
@@ -235,29 +243,38 @@ def computeClass(config, report_unw, report_w, Class):
             len(report_w_filtered)/neq_w*1e2)
 
 
-def getStationMetaData(network,
+def getStationMetaData(networks,
                        station,
                        starttime,
                        endtime,
                        longitude,
                        latitude,
-                       maxradius):
+                       maxradius,
+                       catalog):
     try:
         client = Client("http://localhost:8080")
     except Exception:
         print("\n+++ Check if FDSN service is running and try again!")
         sys.exit()
-    inventory = client.get_stations(network=network,
+    inventory = client.get_stations(network=",".join(networks),
                                     station=station,
                                     starttime=starttime,
                                     endtime=endtime,
                                     latitude=latitude,
                                     longitude=longitude,
                                     maxradius=maxradius)
+    stations = []
+    for event in catalog:
+        for pick in event.picks:
+            station = pick.waveform_id.station_code
+            if len(station) <= 4 and station not in stations:
+                stations.append(station)
     data = []
     for net in inventory:
         for station in net:
             code = station.code
+            if code not in stations:
+                continue
             lat = station.latitude
             lon = station.longitude
             elv = station.elevation

@@ -1,15 +1,13 @@
 import os
 
 from core.Extra import getStationMetaData
-from obspy import read_events
 from obspy.geodetics.base import degrees2kilometers as d2k
 from tqdm import tqdm
 
 
-def preparePhaseFile(catalogFile):
+def preparePhaseFile(catalog):
     phaseFile = os.path.join("phase.dat")
     print("\n+++ Loading raw catalog ... ")
-    catalog = read_events(catalogFile)
     ws = {"0": 1.00,
           "1": 0.75,
           "2": 0.50,
@@ -40,13 +38,14 @@ def preparePhaseFile(catalogFile):
                 f.write(phase)
 
 
-def prepareStationFile(config):
-    station_df = getStationMetaData(config["network"],
+def prepareStationFile(config, catalog):
+    station_df = getStationMetaData(config["networks"],
                                     "*",
                                     config["starttime"],
                                     config["endtime"],
                                     *config["center"],
-                                    config["maxradius"])
+                                    config["maxradius"],
+                                    catalog)
     station_df.to_csv("station.dat",
                       header=None,
                       index=None,
@@ -156,10 +155,10 @@ def prepareHypoDD(config):
         f.write("* DAMP:                 damping (for lsqr only) \n")
         f.write("*       ---  CROSS DATA ----- ----CATALOG DATA ----\n")
         f.write("* NITER WTCCP WTCCS WRCC WDCC WTCTP WTCTS WRCT WDCT DAMP\n")
-        f.write("  5      -9     -9   -9   -9   1.0   1.0  -9    -9   85\n")
-        f.write("  5      -9     -9   -9   -9   1.0   0.8   10   20   75\n")
-        f.write("  5      -9     -9   -9   -9   1.0   0.8   9    15   65\n")
-        f.write("  5      -9     -9   -9   -9   1.0   0.8   8    10   55\n")
+        f.write("  5      -9     -9   -9   -9   1.0   1.0  -9    -9   55\n")
+        f.write("  5      -9     -9   -9   -9   1.0   0.8   10   20   50\n")
+        f.write("  5      -9     -9   -9   -9   1.0   0.8   9    15   45\n")
+        f.write("  5      -9     -9   -9   -9   1.0   0.8   8    10   40\n")
         f.write("*\n")
         f.write("*--- 1D model:\n")
         f.write("* NLAY:         number of model layers  \n")
@@ -183,9 +182,9 @@ def prepareHypoDD(config):
 
 
 def prepareHypoddInputs(config,
-                        catalogFile,
+                        catalog,
                         locationPath):
-    preparePhaseFile(catalogFile)
-    prepareStationFile(config)
+    preparePhaseFile(catalog)
+    prepareStationFile(config, catalog)
     preparePH2DT(config)
     prepareHypoDD(config)

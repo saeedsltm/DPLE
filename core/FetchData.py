@@ -33,7 +33,7 @@ def fetchRawWaveforms(config):
             reject_channels_with_gaps=False,
             chunklength_in_sec=86400,
             minimum_length=0.0,
-            network=config["network"],
+            network=",".join(config["networks"]),
             channel_priorities=["HH[ENZ]", "BH[ENZ]", "SH[ENZ]", "HN[ENZ]"],
             sanitize=True,
         )

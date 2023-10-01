@@ -9,13 +9,17 @@ from pandas import DataFrame, Series
 from numpy import array, nan
 from glob import glob
 from core.Extra import handle_masked_arr
+from obspy.core.inventory.inventory import Inventory
+from gamma.utils import estimate_station_spacing
 
 
 def prepareWaveforms(starttime, endtime, config):
     path = Path("tmp")
     path.mkdir(parents=True, exist_ok=True)
-    for f in glob(os.path.join(path, "*")):
-        os.remove(f)
+
+    if config["preprocess_data"]:
+        for f in glob(os.path.join(path, "*")):
+            os.remove(f)
 
     # Read Station Data
     invFile = os.path.join(
@@ -25,7 +29,10 @@ def prepareWaveforms(starttime, endtime, config):
         "*.xml")
 
     try:
-        inv = read_inventory(invFile)
+        inventory = read_inventory(invFile)
+        inv = Inventory()
+        for network in config["networks"]:
+            inv += inventory.select(network)
     except Exception:
         return
 
@@ -106,17 +113,16 @@ def picks2DF(picks, pick_outfile):
              "timestamp": pick.peak_time.datetime,
              "prob": pick.peak_value,
              "type": pick.phase.lower(),
-             "amp": nan, #pick.phase_amplitude,
-             "phase_amp": nan #pick.phase_amplitude
+             "amp": nan,  # pick.phase_amplitude,
+             "phase_amp": nan  # pick.phase_amplitude
              })
     pick_df = DataFrame(pick_df)
     pick_df.to_csv(outFile, index=False, float_format="%0.3f")
-    return pick_df
 
 
-def applyGaMMaConfig(config):
+def applyGaMMaConfig(config, stations):
     method = {
-        "BGMM": 4,
+        "BGMM": 8,
         "GMM": 1}
     config["oversample_factor"] = method[config["method"]]
 
@@ -148,4 +154,8 @@ def applyGaMMaConfig(config):
                              "xlim": config["x(km)"],
                              "ylim": config["y(km)"],
                              "zlim": config["z(km)"]}
+    if config["dbscan_eps"] == "A":
+        config["dbscan_eps"] = 2.5 * estimate_station_spacing(stations) / config["vel"]["p"]
+
+
     return config

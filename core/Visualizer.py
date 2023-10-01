@@ -70,12 +70,12 @@ def plotSeismicity(config):
             ax.scatter(
                 station_df["x(km)"],
                 station_df["y(km)"],
-                m="^", s=40, mew=0.5, mec="k", mfc="gray")
+                m="^", s=10, mew=0.25, mec="k", mfc="gray", alpha=0.5)
             for x, y, s in zip(
                     station_df["x(km)"],
                     station_df["y(km)"],
                     station_df["id"]):
-                ax.text(x, y, s.split(".")[1], fontsize=5)
+                ax.text(x, y, s.split(".")[1], fontsize=3, alpha=0.5)
             ax.set_xlabel("Easting [km]")
             ax.set_ylabel("Northing [km]")
             fig.save(os.path.join(
@@ -154,8 +154,11 @@ def pickerTest(config):
                     continue
                 stream.merge(fill_value=None)
                 stream = handle_masked_arr(stream)
-                sub.append(stream.select(station=station, channel="??Z")[0])
-
+                streamZ = stream.select(station=station, channel="??Z")
+                if len(streamZ):
+                    sub.append(streamZ[0])
+            if len(sub) == 0:
+                continue
             sub = sub.slice(first - 5, last + 5)
 
             sub = sub.copy()
@@ -184,7 +187,7 @@ def pickerTest(config):
                          (station_y - event["y(km)"]) ** 2 +
                          event["z(km)"] ** 2)
                 x = utc(pick.timestamp) - trace.stats.starttime
-                if pick.type == "P":
+                if pick.type.upper() == "P":
                     ls = '-'
                 else:
                     ls = '--'

@@ -1,16 +1,20 @@
 import os
+import sys
 from datetime import timedelta as td
 from pathlib import Path
+from glob import glob
 
 import seisbench.models as sbm
 from gamma.utils import association
 from obspy import read
-from pandas import DataFrame, Series, date_range
+from pandas import DataFrame, Series, date_range, concat, read_csv
 from pyproj import Proj
 from tqdm import tqdm
+from obspy.core.stream import Stream
 
 from core.PrepareData import (applyGaMMaConfig, picks2DF, prepareInventory,
                               prepareWaveforms)
+from core.Extra import divide_chunks
 
 
 def runSeisBench(config):
@@ -35,28 +39,48 @@ def runSeisBench(config):
         dataExists = prepareWaveforms(st, et, config)
         if not dataExists:
             continue
-        stream = read(os.path.join("tmp", "*.mseed"))
 
-        min_p_prob = config["min_p_prob"]
-        min_s_prob = config["min_s_prob"]
-        highpass_filter = config["highpass_filter"]
+        chunksData = glob(os.path.join("tmp", "*.mseed"))
+        for c, chunkData in enumerate(divide_chunks(chunksData, 10)):
 
-        # Apply PhaseNet predict method
-        picker = sbm.PhaseNet.from_pretrained(config["model"])
-        picks = picker.classify(stream,
-                                batch_size=64,
-                                P_threshold=min_p_prob,
-                                S_threshold=min_s_prob)
-        pick_outfile = f"{st.strftime('%Y%m%d')}_{et.strftime('%Y%m%d')}"
-        if os.path.exists(os.path.join("results", f"{pick_outfile}.csv")):
-            os.remove(os.path.join("results", f"{pick_outfile}.csv"))
+            pick_outfile = f"{st.strftime('%Y%m%d')}_{et.strftime('%Y%m%d')}_{c}.csv"
+
+            if not config["repick_data"] and os.path.exists(
+                    os.path.join("results", pick_outfile)):
+                continue
+
+            stream = Stream()
+            for s in chunkData:
+                stream += read(s)
+
+            min_p_prob = config["min_p_prob"]
+            min_s_prob = config["min_s_prob"]
+
+            # Apply PhaseNet predict method
+            picker = sbm.PhaseNet.from_pretrained(config["model"])
+            picks = picker.classify(stream,
+                                    batch_size=64,
+                                    P_threshold=min_p_prob,
+                                    S_threshold=min_s_prob)
+
+            if config["repick_data"] and os.path.exists(
+                    os.path.join("results", f"{pick_outfile}.csv")):
+                os.remove(os.path.join("results", f"{pick_outfile}.csv"))
+
+            if len(picks):
+                picks2DF(picks, pick_outfile)
 
         # Create DataFrame for stations and picks
+        picks_df_list = glob(os.path.join(
+            "results", f"{st.strftime('%Y%m%d')}_{et.strftime('%Y%m%d')}_*.csv"))
+        pick_df = concat(map(read_csv, picks_df_list))
+        pick_df.reset_index(inplace=True, drop=True)
+        pick_df.to_csv(os.path.join(
+            "results", f"{st.strftime('%Y%m%d')}_{et.strftime('%Y%m%d')}.csv"))
         station_df, station_dict = prepareInventory(config, proj, st, et)
-        pick_df = picks2DF(picks, pick_outfile)
 
         # Apply GaMMa configuration
-        config = applyGaMMaConfig(config)
+        config = applyGaMMaConfig(config, station_df)
 
         # Removes picks without amplitude if amplitude flag is set to True
         if config["use_amplitude"]:
