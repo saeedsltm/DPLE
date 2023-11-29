@@ -43,8 +43,8 @@ class Main():
 
 if __name__ == "__main__":
     app = Main()
-    # app.downloadRawData()
-    # app.runPicker()
-    # app.exportCatalog()
-    # app.locate()
+    app.downloadRawData()
+    app.runPicker()
+    app.exportCatalog()
+    app.locate()
     app.visualizeResults()

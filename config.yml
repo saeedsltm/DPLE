@@ -7,7 +7,7 @@ searchWindow: []
 center: [56.25, 27.50]
 minradius: 0.0
 maxradius: 1.0
-# Selected region for appyling picker
+# Selected region for applying picker
 xlim_degree: [55.00, 58.00]
 ylim_degree: [26.00, 29.00]
 zlim_degree: [0.0, 50.0]
@@ -27,7 +27,7 @@ model: "original"
 degree2km: 111.19492474777779
 use_dbscan: true
 method: BGMM
-# Velocity Model, (Acarel et al, 2019)
+# Velocity Model
 useEikonal: true
 zz: [0.0, 2.0, 4.0, 10.0, 14.0, 19.0, 46.0]
 vp: [4.2, 5.4, 5.7,  5.9,  6.1,  6.5,  8.2]
@@ -44,7 +44,7 @@ max_sigma11: 1.5 # Max phase time residual (s)
 max_sigma22: 1.0 # Max phase amplitude residual (in log scale)
 max_sigma12: 1.0 # Max covariance term. (Usually not used)
 use_amplitude: false
-#============================ Visilization
+#============================ Visualization
 plotResults: true
 nTests: 3
 minmaxRes: 2.0 # s
