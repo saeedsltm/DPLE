@@ -30,7 +30,7 @@ class Main():
     def locate(self):
         locateHypocenter(self.config)
         locateHypo71(self.config)
-        # locateHypoDD(self.config)
+        locateHypoDD(self.config)
 
     def visualizeResults(self):
         plotSeismicity(self.config)
@@ -38,7 +38,7 @@ class Main():
         pickerStats(self.config)
         plotCrossSection(self.config, "hypocenter")
         plotCrossSection(self.config, "hypo71")
-        # plotCrossSection(self.config, "hypoDD")
+        plotCrossSection(self.config, "hypoDD")
 
 
 if __name__ == "__main__":
@@ -46,5 +46,5 @@ if __name__ == "__main__":
     # app.downloadRawData()
     # app.runPicker()
     # app.exportCatalog()
-    app.locate()
+    # app.locate()
     app.visualizeResults()

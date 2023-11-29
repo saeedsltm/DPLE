@@ -10,7 +10,7 @@ from numpy import array, nan
 from glob import glob
 from core.Extra import handle_masked_arr
 from obspy.core.inventory.inventory import Inventory
-from gamma.utils import estimate_station_spacing
+from gamma.utils import estimate_eps
 
 
 def prepareWaveforms(starttime, endtime, config):
@@ -122,9 +122,10 @@ def picks2DF(picks, pick_outfile):
 
 def applyGaMMaConfig(config, stations):
     method = {
-        "BGMM": 8,
+        "BGMM": 5,
         "GMM": 1}
     config["oversample_factor"] = method[config["method"]]
+    config["ncpu"] = os.cpu_count() - 2
 
     config["vel"] = {"p": 6.0, "s": 6.0 / 1.75}
     config["dims"] = ["x(km)", "y(km)", "z(km)"]
@@ -155,7 +156,6 @@ def applyGaMMaConfig(config, stations):
                              "ylim": config["y(km)"],
                              "zlim": config["z(km)"]}
     if config["dbscan_eps"] == "A":
-        config["dbscan_eps"] = 2.5 * estimate_station_spacing(stations) / config["vel"]["p"]
-
+        config["dbscan_eps"] = estimate_eps(stations, config["vel"]["p"])
 
     return config

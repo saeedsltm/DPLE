@@ -30,8 +30,8 @@ def locateHypocenter(config):
         f.write("all.out\nn\n")
     cmd = "hyp < hyp.inp >/dev/null 2>/dev/null"
     os.system(cmd)
-    setMagnitude("hyp.out", config)
     catalog2xyzm(config, "hyp.out", "hypocenter")
     cmd = "select select.inp >/dev/null 2>/dev/null"
     os.system(cmd)
+    setMagnitude("select.out", config)
     os.chdir(root)

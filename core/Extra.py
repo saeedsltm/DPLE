@@ -51,6 +51,24 @@ def weighted_avg_and_std(values, weights):
 
 
 def weightMapper(weights, minW=0, reverse=False):
+    """
+    Compute NORDIC weight based on probability score retured fom picker
+
+    Parameters
+    ----------
+    weights : list
+        probability scores.
+    minW : int, optional
+        minimum probability to be consider. The default is 0.
+    reverse : bool, optional
+        reverse weighting scheme. The default is False.
+
+    Returns
+    -------
+    weights : list
+        weights in NORDIC format.
+
+    """
     if not reverse:
         sc = MinMaxScaler(feature_range=(minW, 1.0))
         W = logspace(minW, 1.0, 5)[::-1]

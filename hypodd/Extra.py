@@ -1,5 +1,21 @@
 from numpy import sqrt
 from pandas import read_csv, to_datetime
+from yaml import SafeLoader, load
+import os
+import sys
+
+
+def readHypoddConfig():
+    hypoddConfigPath = os.path.join("files", "hypodd.yml")
+    if not os.path.exists(hypoddConfigPath):
+        msg = "+++ Could not find hypoDD configuration file! Aborting ..."
+        print(msg)
+        sys.exit()
+    with open(hypoddConfigPath) as f:
+        config = load(f, Loader=SafeLoader)
+    msg = "+++ Configuration file was loaded successfully."
+    print(msg)
+    return config
 
 
 def loadHypoDDRelocFile():

@@ -6,7 +6,6 @@ from shutil import copy
 import latlon as ll
 from numpy import nan
 from pandas import Series, read_fwf, to_datetime
-from tqdm import tqdm
 
 from hypo71.Input import prepareInputFile
 
@@ -21,14 +20,14 @@ def locateHypo71(config):
         copy(catalogFile, locationPath)
     root = os.getcwd()
     os.chdir(locationPath)
-    desc = "+++ Locate catalog using 'Hypo71' ..."
-    for catalogPath in tqdm(glob("all.out"), desc=desc):
-        outName = catalogPath.split(os.sep)[-1].split(".")[0]
-        outName = "hypo71"
-        prepareInputFile(config, resetsPath, catalogPath)
-        cmd = "Hypo71PC < input.dat >/dev/null 2>/dev/null"
-        os.system(cmd)
-        writexyzm(outName)
+    print("+++ Locate catalog using 'Hypo71' ...")
+    catalogPath = "all.out"
+    outName = catalogPath.split(".")[0]
+    outName = "hypo71"
+    prepareInputFile(config, resetsPath, catalogPath)
+    cmd = "Hypo71PC < input.dat >/dev/null 2>/dev/null"
+    os.system(cmd)
+    writexyzm(outName)
     os.chdir(root)
 
 

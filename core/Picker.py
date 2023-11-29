@@ -1,5 +1,4 @@
 import os
-import sys
 from datetime import timedelta as td
 from pathlib import Path
 from glob import glob
@@ -34,6 +33,7 @@ def runSeisBench(config):
 
     # Loop over one day data
     for st, et in zip(startDateRange, endDateRange):
+        print(f"\n+++ Working on period: {st} - {et}")
 
         # Prepare One-day-length data
         dataExists = prepareWaveforms(st, et, config)
@@ -57,12 +57,14 @@ def runSeisBench(config):
             min_s_prob = config["min_s_prob"]
 
             # Apply PhaseNet predict method
+            print("+++ Applying SeisBench ...")
+            ncpu = os.cpu_count() - 2
             picker = sbm.PhaseNet.from_pretrained(config["model"])
             picks = picker.classify(stream,
                                     batch_size=64,
                                     P_threshold=min_p_prob,
-                                    S_threshold=min_s_prob)
-
+                                    S_threshold=min_s_prob,
+                                    parallelism=ncpu).picks
             if config["repick_data"] and os.path.exists(
                     os.path.join("results", f"{pick_outfile}.csv")):
                 os.remove(os.path.join("results", f"{pick_outfile}.csv"))

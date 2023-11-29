@@ -1,0 +1,12 @@
+---
+#============================ ph2dt
+MINWGHT: 0
+MAXDIST: 150
+MAXSEP: 15
+MAXNGH: 10
+MINLNKS: 6
+MINOBS: 4
+MAXOBS: 99
+#============================ hypoDD
+DIST: 150
+OBSCT: 6

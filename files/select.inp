@@ -4,10 +4,10 @@
  End time                     : 21001231235959
  Minimum number of stations   :              4
  Maximum number of stations   :            999
- Minimum latitude             :         28.000
- Maximum latitude             :         30.000
- Minimum longitude            :         50.000
- Maximum longitude            :         52.000
+ Minimum latitude             :         26.000
+ Maximum latitude             :         29.000
+ Minimum longitude            :         55.000
+ Maximum longitude            :         58.000
  Minimum magnitude            :       -990.000
  Maximum magnitude            :        999.000
  Magnitude agencies           :                               
@@ -17,11 +17,11 @@
  Minimum depth                :        -99.000
  Maximum depth                :        999.000
  Minimum error in latitude    :          0.000
- Maximum error in latitude    :      99999.000
+ Maximum error in latitude    :         10.000
  Minimum error in longitude   :          0.000
- Maximum error in longitude   :      99999.000
+ Maximum error in longitude   :         10.000
  Minimum error in depth       :        -99.000
- Maximum error in depth       :      99999.000
+ Maximum error in depth       :         10.000
  Magnitude types (L,C,B,S,W)  :      
  Distance (ID) types (L,R,D)  :      
  Event types (e.g. E,V,P)     :      

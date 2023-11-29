@@ -58,21 +58,21 @@ def prepareVelocity(config):
     depths = config["zz"]
     VpVs = config["vp_vs_ratio"]
     nLayers = len(velocities)
-    velocities = " ".join([f"{v:5.1f}" for v in velocities])
+    velocities = " ".join([f"{v:5.2f}" for v in velocities])
     depths = " ".join([f"{d:5.1f}" for d in depths])
-    VpVs = f"{VpVs:5.1f}"
+    VpVs = f"{VpVs:5.2f}"
     return velocities, depths, VpVs, nLayers
 
 
-def preparePH2DT(config):
+def preparePH2DT(config, hypoddConfig):
     ph2dtFile = os.path.join("ph2dt.inp")
-    MINWGHT = 0
-    MAXDIST = d2k(config["maxradius"])
-    MAXSEP = 15
-    MAXNGH = 10
-    MINLNKS = 6
-    MINOBS = 4
-    MAXOBS = 99
+    MINWGHT = hypoddConfig["MINWGHT"]
+    MAXDIST = hypoddConfig["MAXDIST"]
+    MAXSEP = hypoddConfig["MAXSEP"]
+    MAXNGH = hypoddConfig["MAXNGH"]
+    MINLNKS = hypoddConfig["MINLNKS"]
+    MINOBS = hypoddConfig["MINOBS"]
+    MAXOBS = hypoddConfig["MAXOBS"]
     with open(ph2dtFile, "w") as f:
         f.write("* ph2dt.inp - input control file for program ph2dt\n")
         f.write("* Input station file:\n")
@@ -93,8 +93,9 @@ def preparePH2DT(config):
         f.write(f"{MINWGHT:0.0f}      {MAXDIST:0.0f}       {MAXSEP:0.0f}      {MAXNGH:0.0f}       {MINLNKS:0.0f}      {MINOBS:0.0f}      {MAXOBS:0.0f}\n")
 
 
-def prepareHypoDD(config):
-    DIST = d2k(config["maxradius"])
+def prepareHypoDD(config, hypoddConfig):
+    DIST = hypoddConfig["DIST"]
+    OBSCT = hypoddConfig["OBSCT"]
     hypoddFile = os.path.join("hypoDD.inp")
     velocities, depths, VpVs, nLayers = prepareVelocity(config)
     with open(hypoddFile, "w") as f:
@@ -131,13 +132,13 @@ def prepareHypoDD(config):
         f.write("* IPHA: 1= P; 2= S; 3= P&S\n")
         f.write("* DIST:max dist (km) between cluster centroid and station \n")
         f.write("* IDAT   IPHA   DIST\n")
-        f.write(f"    2     3     {DIST:0.0f}\n")
+        f.write(f"    2     3     {DIST}\n")
         f.write("*\n")
         f.write("*--- event clustering:\n")
         f.write("* OBSCC:    min # of obs/pair for crosstime data (0= no clustering)\n")
         f.write("* OBSCT:    min # of obs/pair for network data (0= no clustering)\n")
         f.write("* OBSCC  OBSCT    \n")
-        f.write("     0     6      \n")
+        f.write(f"     0     {OBSCT}      \n")
         f.write("*\n")
         f.write("*--- solution control:\n")
         f.write("* ISTART:       1 = from single source; 2 = from network sources\n")
@@ -182,9 +183,10 @@ def prepareHypoDD(config):
 
 
 def prepareHypoddInputs(config,
+                        hypoddConfig,
                         catalog,
                         locationPath):
     preparePhaseFile(catalog)
     prepareStationFile(config, catalog)
-    preparePH2DT(config)
-    prepareHypoDD(config)
+    preparePH2DT(config, hypoddConfig)
+    prepareHypoDD(config, hypoddConfig)
