@@ -14,6 +14,7 @@ from obspy.core.stream import Stream
 from core.PrepareData import (applyGaMMaConfig, picks2DF, prepareInventory,
                               prepareWaveforms)
 from core.Extra import divide_chunks
+from torch import cuda
 
 
 def runSeisBench(config):
@@ -60,6 +61,8 @@ def runSeisBench(config):
             print("+++ Applying SeisBench ...")
             ncpu = os.cpu_count() - 2
             picker = sbm.PhaseNet.from_pretrained(config["model"])
+            if cuda.is_available():
+                picker.cuda()
             picks = picker.classify(stream,
                                     batch_size=64,
                                     P_threshold=min_p_prob,
