@@ -3,7 +3,7 @@ from datetime import timedelta as td
 
 import proplot as plt
 from numpy import (abs, arange, array, histogram, max, mean, min, random, sqrt,
-                   unique)
+                   unique, nan)
 from obspy import Stream
 from obspy import UTCDateTime as utc
 from obspy import read, read_events
@@ -34,6 +34,8 @@ def plotSeismicity(config):
         for st, et in tqdm(
                 zip(startDateRange, endDateRange),
                 desc="+++ Plotting seismicity maps"):
+            starttime = st.strftime('%Y-%m-%d')
+            endtime = et.strftime('%Y-%m-%d')
             catalog = os.path.join(
                 "results",
                 f"catalog_{st.strftime('%Y%m%d')}_{et.strftime('%Y%m%d')}.csv")
@@ -42,28 +44,22 @@ def plotSeismicity(config):
             catalog = read_csv(catalog, sep="\t")
             if len(catalog) <= 1:
                 continue
-            station_df, station_dict = prepareInventory(config, proj, st, et)
-            catalog[[
-                "x(km)",
-                "y(km)"]] = catalog.apply(lambda x: Series(
-                    proj(longitude=x["longitude"],
-                         latitude=x["latitude"],
-                         inverse=False)),
-                axis=1)
-            catalog["z(km)"] = catalog["depth(m)"]*1e-3
+            station_df, station_dict = prepareInventory(
+                config, proj, st, et, onsite=True)
 
             fig, axs = plt.subplots()
             [ax.grid(ls=":") for ax in axs]
             ax = axs[0]
             ax.format(
-                ultitle=f"{len(catalog)} events from {st.strftime('%Y-%m-%d')} to {et.strftime('%Y-%m-%d')}",
+                ultitle=f"{len(catalog)} events from {starttime} to {endtime}",
                 fontsize=5)
             ax.set_aspect("equal")
             cb = ax.scatter(
-                catalog["x(km)"],
-                catalog["y(km)"],
-                c=catalog["z(km)"],
-                s=catalog["magnitude"] if catalog["magnitude"].mean() != 99 else 10,
+                catalog["x"],
+                catalog["y"],
+                c=catalog["z"],
+                s=catalog["magnitude"] if catalog["magnitude"].mean() not in [
+                    nan, 99] else 10,
                 cmap="inferno_r",
                 mew=0.25, mec="k", mfc="r",
                 vmin=0)
@@ -74,11 +70,13 @@ def plotSeismicity(config):
                 station_df["x(km)"],
                 station_df["y(km)"],
                 m="^", s=10, mew=0.25, mec="k", mfc="gray", alpha=0.5)
+            text_dy = -17
             for x, y, s in zip(
                     station_df["x(km)"],
                     station_df["y(km)"],
                     station_df["id"]):
-                ax.text(x, y, s.split(".")[1], fontsize=3, alpha=0.5)
+                ax.text(x, y+text_dy, s.split(".")
+                        [1], fontsize=3, alpha=0.5, ha="center")
             ax.set_xlabel("Easting [km]")
             ax.set_ylabel("Northing [km]")
             fig.save(os.path.join(
@@ -98,16 +96,14 @@ def pickerTest(config):
     for st, et in tqdm(
             zip(startDateRange, endDateRange),
             desc="+++ Plotting picker test samples"):
-
+        starttime = st.strftime('%Y-%m-%d')
+        endtime = et.strftime('%Y-%m-%d')
         catalog = os.path.join(
             "results",
-            f"catalog_{st.strftime('%Y%m%d')}_{et.strftime('%Y%m%d')}.csv")
+            f"catalog_{starttime}_{endtime}.csv")
         pick = os.path.join(
             "results",
-            f"picks_{st.strftime('%Y%m%d')}_{et.strftime('%Y%m%d')}.csv")
-        assignment = os.path.join(
-            "results",
-            f"assignments_{st.strftime('%Y%m%d')}_{et.strftime('%Y%m%d')}.csv")
+            f"picks_{starttime}_{endtime}.csv")
         proj = Proj(f"+proj=sterea\
                     +lon_0={config['center'][0]}\
                     +lat_0={config['center'][1]}\
@@ -119,25 +115,15 @@ def pickerTest(config):
         catalog_df = read_csv(catalog, sep="\t")
         catalog_df.sort_values(by=["time"], inplace=True)
         pick_df = read_csv(pick, sep="\t")
-        assignment_df = read_csv(assignment, sep="\t")
         station_df, station_dict = prepareInventory(config, proj, st, et)
-        catalog_df[[
-            "x(km)",
-            "y(km)"]] = catalog_df.apply(lambda x: Series(
-                proj(longitude=x["longitude"],
-                     latitude=x["latitude"],
-                     inverse=False)),
-            axis=1)
-        catalog_df["z(km)"] = catalog_df["depth(m)"]*1e-3
 
         for n in range(config["nTests"]):
 
             event_index = random.randint(len(catalog_df))
-            event_picks = [pick_df.iloc[i]
-                           for i in assignment_df[assignment_df["event_index"] == event_index]["pick_index"]]
+            event_picks = pick_df[pick_df["event_idx"] == event_index]
             event = catalog_df.iloc[event_index]
 
-            times = [utc(pick.timestamp) for pick in event_picks]
+            times = [utc(time) for time in event_picks.time]
 
             if len(times) == 0:
                 continue
@@ -147,7 +133,7 @@ def pickerTest(config):
             sub = Stream()
 
             for station in unique(
-                    [pick.id.split(".")[1] for pick in event_picks]):
+                    [station.split(".")[1] for station in event_picks.station]):
                 streamFile = os.path.join(
                     "DB",
                     f"{st.strftime('%Y%m%d')}_{et.strftime('%Y%m%d')}",
@@ -174,30 +160,30 @@ def pickerTest(config):
             ax = axs[0]
             [ax.grid(ls=":") for ax in axs]
             ax.format(
-                ultitle=f"Ort={utc(event['time']).strftime('%Y-%m-%dT%H:%M:%S')}, Lon={event['longitude']:0.3f}, Lat={event['latitude']:0.3f}, Dep={event['depth(m)']*1e-3:0.3f}, Mag={event['magnitude']:0.1f}",
+                ultitle=f"Ort={utc(event['time']).strftime('%Y-%m-%dT%H:%M:%S')}, Lon={event['longitude']:0.3f}, Lat={event['latitude']:0.3f}, Dep={event['depth']:0.3f}, Mag={event['magnitude']:0.1f}",
                 fontsize=4)
 
             for i, trace in enumerate(sub):
                 normed = trace.data - mean(trace.data)
                 normed = normed / max(abs(normed))
                 station_x, station_y = station_dict[trace.id[:-4]]
-                y = sqrt((station_x - event["x(km)"]) ** 2 +
-                         (station_y - event["y(km)"]) ** 2 +
-                         event["z(km)"] ** 2)
+                y = sqrt((station_x - event["x"]) ** 2 +
+                         (station_y - event["y"]) ** 2 +
+                         event["z"] ** 2)
                 ax.plot(trace.times(), 5 * normed + y, lw=0.25)
 
-            for pick in event_picks:
-                station_x, station_y = station_dict[pick.id]
-                y = sqrt((station_x - event["x(km)"]) ** 2 +
-                         (station_y - event["y(km)"]) ** 2 +
-                         event["z(km)"] ** 2)
-                x = utc(pick.timestamp) - trace.stats.starttime
-                if pick.type.upper() == "P":
+            for p, pick in event_picks.iterrows():
+                station_x, station_y = station_dict[pick.station]
+                y = sqrt((station_x - event["x"]) ** 2 +
+                         (station_y - event["y"]) ** 2 +
+                         event["z"] ** 2)
+                x = utc(pick.time) - trace.stats.starttime
+                if pick.phase.upper() == "P":
                     ls = '-'
                 else:
                     ls = '--'
                 ax.plot([x, x], [y - 3, y + 3], 'k', ls=ls, lw=0.5)
-                ax.text(x, y+3, f"{pick.prob:0.1f}", fontsize=3)
+                ax.text(x, y+3, f"{pick.probability:0.1f}", fontsize=3)
 
             ax.set_ylim(0)
             ax.set_xlim(0, max(trace.times()))

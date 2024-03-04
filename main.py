@@ -6,7 +6,8 @@ from core.FetchData import fetchRawWaveforms
 from hypo71.Locate import locateHypo71
 from hypocenter.Locate import locateHypocenter
 from hypodd.Locate import locateHypoDD
-from core.Picker import runSeisBench
+from core.Picker import runPicker
+from core.Associator import runAssociator
 from core.Visualizer import pickerStats, pickerTest, plotSeismicity
 from core.CrossSection import plotCrossSection
 
@@ -21,16 +22,19 @@ class Main():
     def downloadRawData(self):
         fetchRawWaveforms(self.config)
 
-    def runPicker(self):
-        runSeisBench(self.config)
+    def Picker(self):
+        runPicker(self.config)
+
+    def Associator(self):
+        runAssociator(self.config)
 
     def exportCatalog(self):
         exporter(self.config)
 
     def locate(self):
         locateHypocenter(self.config)
-        locateHypo71(self.config)
-        locateHypoDD(self.config)
+        # locateHypo71(self.config)
+        # locateHypoDD(self.config)
 
     def visualizeResults(self):
         plotSeismicity(self.config)
@@ -44,7 +48,8 @@ class Main():
 if __name__ == "__main__":
     app = Main()
     app.downloadRawData()
-    app.runPicker()
+    app.Picker()
+    app.Associator()
     app.exportCatalog()
     app.locate()
     app.visualizeResults()

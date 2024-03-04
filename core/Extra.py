@@ -160,8 +160,8 @@ def getZer(event):
 
 def getRMS(arrivals):
     time_residuals = array([
-        arrival.time_residual for arrival in arrivals if isinstance(
-            arrival.time_residual, float)
+        arrival.time_residual if isinstance(
+            arrival.time_residual, float) else nan for arrival in arrivals
     ])
     time_weights = array([
         arrival.time_weight if isinstance(

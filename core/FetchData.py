@@ -24,7 +24,8 @@ def fetchRawWaveforms(config):
 
     for st, et in tqdm(
             zip(startDateRange, endDateRange),
-            desc="+++ Downloading waveforms"):
+            desc="+++ Downloading waveforms",
+            unit="day"):
 
         # Data Restrictions
         restrictions = Restrictions(

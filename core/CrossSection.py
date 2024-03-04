@@ -68,6 +68,9 @@ def getProfileDimension(x, y, z, length, theta):
     y_str, y_stp = y + 0.5*length * \
         np.sin(np.deg2rad(-theta+270)), y + 0.5*length*np.sin(np.deg2rad(-theta+90))
     z_str, z_stp = 0, z
+    if theta[0] > -90.0 and theta[0] < 0.0:
+        x_str, x_stp = x_stp, x_str
+        y_str, y_stp = y_stp, y_str
     return x_str[0], x_stp[0], y_str[0], y_stp[0], z_str, z_stp[0]
 
 
@@ -130,7 +133,29 @@ def make_profile(config, proj, dx, dy, length, width, z, theta):
     profile.X += dx
     profile.Y += dy
     return profile
-#########################################
+
+
+def getProfileGeometry(config, proj, Profile):
+    dx = Profile["dx"]
+    dy = Profile["dy"]
+    length = Profile["length"]
+    width = Profile["width"]
+    z = Profile["z"]
+    theta = Profile["theta"]
+    profile = make_profile(config, proj, dx, dy, length, width, z, theta)
+    xmin, xmax, ymin, ymax, zmin, zmax = getProfileDimension(profile.X,
+                                                             profile.Y,
+                                                             profile.Z,
+                                                             profile.Length,
+                                                             profile.Orientation)
+    (xminr, yminr,
+     xminl, yminl,
+     xmaxr, ymaxr,
+     xmaxl, ymaxl) = getEndSegments(xmin, xmax,
+                                    ymin, ymax,
+                                    width, theta)
+    return (profile, xmin, xmax, ymin, ymax, zmin, zmax,
+            xminr, yminr, xminl, yminl, xmaxr, ymaxr, xmaxl, ymaxl)
 
 
 def plotCrossSection(config, locator):
@@ -143,19 +168,12 @@ def plotCrossSection(config, locator):
         cross_name = ascii_uppercase[P]
         outName = os.path.join("results", "location", locator,
                                f"cross_{cross_name}.png")
-        dx = Profile["dx"]
-        dy = Profile["dy"]
-        length = Profile["length"]
-        width = Profile["width"]
-        z = Profile["z"]
-        theta = Profile["theta"]
-        profile = make_profile(config, proj, dx, dy, length, width, z, theta)
-        xyzm_df = xyzm_df[xyzm_df.Dep < profile.Z[0]]
-        xmin, xmax, ymin, ymax, zmin, zmax = getProfileDimension(profile.X,
-                                                                 profile.Y,
-                                                                 profile.Z,
-                                                                 profile.Length,
-                                                                 profile.Orientation)
+        (profile,
+         xmin, xmax, ymin, ymax, zmin, zmax,
+         xminr, yminr,
+         xminl, yminl,
+         xmaxr, ymaxr,
+         xmaxl, ymaxl) = getProfileGeometry(config, proj, Profile)
         plane = (
             Point(xmin, ymin, zmin),
             Point(xmax, ymax, zmax),
@@ -193,18 +211,40 @@ def plotCrossSection(config, locator):
         [ax.grid(ls=":") for ax in axs]
         ax1 = axs[0]
         ax2 = axs[1]
+        # shadows of other profiles
+        for P_, Profile_ in enumerate(config["profiles"]):
+            cross_name_ = ascii_uppercase[P_]
+            (profile_,
+             xmin_, xmax_, ymin_, ymax_, zmin_, zmax_,
+             xminr_, yminr_,
+             xminl_, yminl_,
+             xmaxr_, ymaxr_,
+             xmaxl_, ymaxl_) = getProfileGeometry(config, proj, Profile_)
+            ax1.plot([xmin_, xmax_], [ymin_, ymax_], color="gray", ls="-", alpha=0.3)
+            ax1.plot([xminr_, xminl_], [yminr_, yminl_],
+                     color="gray", ls="-", alpha=0.3)
+            ax1.plot([xmaxr_, xmaxl_], [ymaxr_, ymaxl_],
+                     color="gray", ls="-", alpha=0.3)
+            ax1.text(xmin_, ymin_, f"{cross_name_}",
+                     rotation=profile_.Orientation[0],
+                     border=True,
+                     borderinvert=True,
+                     borderwidth=1,
+                     color="k",
+                     alpha=0.3,
+                     **{"weight": "bold", "size": "small", "ha": "center"})
+            ax1.text(xmax_, ymax_, f"{cross_name_}'",
+                     rotation=profile.Orientation[0],
+                     border=True,
+                     borderinvert=True,
+                     borderwidth=1,
+                     color="k",
+                     alpha=0.3,
+                     **{"weight": "bold", "size": "small", "ha": "center"})
+
         ax1.plot([xmin, xmax], [ymin, ymax], "r-")
-
-        (xminr, yminr,
-         xminl, yminl,
-         xmaxr, ymaxr,
-         xmaxl, ymaxl) = getEndSegments(xmin, xmax,
-                                        ymin, ymax,
-                                        width, theta)
-
-        ax1.plot([xminr, xminl], [yminr, yminl], "b-")
-        ax1.plot([xmaxr, xmaxl], [ymaxr, ymaxl], "b-")
-
+        ax1.plot([xminr, xminl], [yminr, yminl], "r-")
+        ax1.plot([xmaxr, xmaxl], [ymaxr, ymaxl], "r-")
         ax1.text(xmin, ymin, f"{cross_name}",
                  rotation=profile.Orientation[0],
                  border=True,

@@ -28,10 +28,11 @@ def setMagnitude(catalogPath, config):
                                     endtime=endtime,
                                     level="channel")
     weight_dict = {}
+    print("+++ Loading selected catalog ...")
     catalog = read_events(catalogPath)
     catalog = catalog.filter(f"time > {starttime.isoformat()}",
                              f"time < {endtime.isoformat()}")
-    desc = "+++ Editing catalog ..."
+    desc = "+++ Calculating amplitude and magnitude using SeisComP ..."
     for event in tqdm(catalog, desc=desc):
         preferred_origin = event.preferred_origin()
         arrivals = preferred_origin.arrivals
@@ -55,10 +56,12 @@ def setMagnitude(catalogPath, config):
     os.system(cmd)
     cmd = f"scmag --ep amp.xml -d {scdb} --reprocess > tmp.xml"
     os.system(cmd)
+    print("+++ Loading QuickML catalog ...")
     catalog = read_events("tmp.xml")
     catalog = catalog.filter(f"time > {starttime.isoformat()}",
                              f"time < {endtime.isoformat()}")
-    for event in catalog:
+    desc = "+++ Editing catalog for setting weights ..."
+    for event in tqdm(catalog, desc=desc):
         preferred_origin = event.preferred_origin()
         picks = event.picks
         amplitudes = event.amplitudes
@@ -67,6 +70,7 @@ def setMagnitude(catalogPath, config):
             pick.update({
                 "extra": extra})
         for amplitude in amplitudes:
+            amplitude.generic_amplitude *= (1e6/2080)  # count to Wood-Anderson nm
             amp_pick_id = amplitude.pick_id
             pick = [pick for pick in picks if pick.resource_id == amp_pick_id][0]
             new_amp_pick = Pick()

@@ -1,7 +1,7 @@
 import os
 from datetime import timedelta as td
 
-from numpy import array
+from numpy import array, isnan
 from obspy import UTCDateTime as utc
 from obspy.core import event
 from pandas import Series, date_range, read_csv
@@ -29,10 +29,10 @@ class feedCatalog():
             obspy.pick: an obspy pick object
         """
         pick = event.Pick()
-        phase_score = eventPick["prob"]
-        phase_type = eventPick["type"]
-        phase_time = eventPick["timestamp"]
-        station_id = eventPick["id"]
+        phase_score = eventPick["probability"]
+        phase_type = eventPick["phase"]
+        phase_time = eventPick["time"]
+        station_id = eventPick["station"]
         pick.onset = "impulsive" if phase_score > 0.7 else "emergent"
         pick.phase_hint = phase_type.upper()
         pick.update({
@@ -42,7 +42,7 @@ class feedCatalog():
                     "namespace": "https://github.com/AI4EPS/PhaseNet"}}})
         nordic_pick_weight = weightMapper(
             array([phase_score]),
-            minW=self.config[f"min_{phase_type.lower()}_prob"],
+            minW=self.config[f"min_{phase_type.upper()}_probability"],
             reverse=False)[0]
         pick.extra.nordic_pick_weight.value = int(nordic_pick_weight)
         pick.time = utc(phase_time)
@@ -67,8 +67,8 @@ class feedCatalog():
         """
         pick = event.Pick()
         pick.phase_hint = "IAML"
-        pick.time = utc(eventPick["timestamp"])
-        net, sta, loc = eventPick["id"].split(".")
+        pick.time = utc(eventPick["time"])
+        net, sta, loc = eventPick["station"].split(".")
         chn = "BHE"
         pick.waveform_id = event.WaveformStreamID(
             network_code=net,
@@ -88,8 +88,8 @@ class feedCatalog():
             obspy.event.arrival: an obspy arrival object
         """
         arrival = event.Arrival()
-        arrival.phase = eventPick["type"].upper()
-        arrival.time = utc(eventPick["timestamp"])
+        arrival.phase = eventPick["phase"].upper()
+        arrival.time = utc(eventPick["time"])
         arrival.pick_id = pick_id
         return arrival
 
@@ -103,14 +103,14 @@ class feedCatalog():
             obspy.event.amplitude: an obspy amplitude object
         """
         amplitude = event.magnitude.Amplitude()
-        amplitude.generic_amplitude = eventPick["phase_amp"] * \
-            1e-2 if eventPick["phase_amp"] else 0
+        amplitude.generic_amplitude = eventPick["amplitude"] * \
+            1e-2 if eventPick["amplitude"] else 0
         amplitude.period = 1.0
         amplitude.type = "A"
         amplitude.category = "point"
         amplitude.unit = "m"
         amplitude.pick_id = pick_id
-        net, sta, loc = eventPick["id"].split(".")
+        net, sta, loc = eventPick["station"].split(".")
         amplitude.waveform_id = event.WaveformStreamID(
             network_code=net,
             station_code=sta,
@@ -132,9 +132,12 @@ class feedCatalog():
             obspy.event.magnitude: an obspy magnitude object
         """
         magnitude = event.Magnitude()
-        magnitude.mag = eventInfo["magnitude"] if eventInfo["magnitude"] else 0
-        magnitude.magnitude_type = "ML"
-        magnitude.origin_id = origin.resource_id
+        if isnan(eventInfo["magnitude"]):
+            pass
+        else:
+            magnitude.mag = eventInfo["magnitude"]
+            magnitude.magnitude_type = "ML"
+            magnitude.origin_id = origin.resource_id
         return magnitude
 
     def getPicksArrivalsAmplitudes(self, eventPicks):
@@ -153,7 +156,7 @@ class feedCatalog():
             arrival = self.setArrival(eventPicks.iloc[p], pick.resource_id)
             picks.append(pick)
             arrivals.append(arrival)
-            if self.config["use_amplitude"] and "S" in eventPicks.iloc[p]["type"].upper():
+            if self.config["use_amplitude"] and "S" in eventPicks.iloc[p]["phase"].upper():
                 pick_amp = self.setPickAmp(eventPicks.iloc[p])
                 amplitude = self.setAmplitude(
                     eventPicks.iloc[p], pick_amp.resource_id)
@@ -175,7 +178,7 @@ class feedCatalog():
         origin.time = utc(eventInfo["time"])
         origin.latitude = eventInfo["latitude"]
         origin.longitude = eventInfo["longitude"]
-        origin.depth = eventInfo["depth(m)"]
+        origin.depth = eventInfo["depth"]*1e3
         origin.arrivals = arrivals
         origin.evaluation_mode = "automatic"
         return origin
@@ -203,8 +206,8 @@ class feedCatalog():
         Event.event_type = "earthquake"
         Event.event_type_certainty = "suspected"
         info = event.base.CreationInfo()
-        info.agency_id = "PhN"
-        info.author = "phasenetRunner"
+        info.agency_id = "ATM"
+        info.author = "SeisBench"
         info.creation_time = utc.now()
         Event.creation_info = info
         Event.preferred_origin_id = origin.resource_id
@@ -224,7 +227,7 @@ class feedCatalog():
         catalog = event.Catalog()
         for event_index in event_df.index:
             eventInfo = event_df.iloc[event_index]
-            eventPicks = pick_df[pick_df["event_index"] == event_index]
+            eventPicks = pick_df[pick_df["event_idx"] == event_index]
             Event = self.setEvent(eventInfo, eventPicks)
             catalog.append(Event)
         return catalog
@@ -269,7 +272,7 @@ class feedCatalog():
                          latitude=x["latitude"],
                          inverse=False)),
                 axis=1)
-            catalog_df["z(km)"] = catalog_df["depth(m)"]*1e-3
+            catalog_df["z(km)"] = catalog_df["depth"]
             cat = self.setCatalog(catalog_df, pick_df, station_df)
             for fmt in config["outCatFmt"]:
                 cat.write(

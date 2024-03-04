@@ -6,11 +6,19 @@ import os
 from pathlib import Path
 from tqdm import tqdm
 from pandas import DataFrame, Series
-from numpy import array, nan
 from glob import glob
 from core.Extra import handle_masked_arr
 from obspy.core.inventory.inventory import Inventory
-from gamma.utils import estimate_eps
+import joblib
+
+
+def saveModel(model, pick_outname):
+    joblib.dump(model, os.path.join("results", f"{pick_outname}.jlib"))
+
+
+def loadModel(pick_filename):
+    model = joblib.load(pick_filename)
+    return model
 
 
 def prepareWaveforms(starttime, endtime, config):
@@ -20,6 +28,8 @@ def prepareWaveforms(starttime, endtime, config):
     if config["preprocess_data"]:
         for f in glob(os.path.join(path, "*")):
             os.remove(f)
+    else:
+        return True
 
     # Read Station Data
     invFile = os.path.join(
@@ -45,7 +55,8 @@ def prepareWaveforms(starttime, endtime, config):
 
     with open(os.path.join("tmp", "mseed.csv"), "w") as fp:
         fp.write("fname,E,N,Z\n")
-        for station in tqdm(stations, desc="+++ Preparing raw data"):
+        desc = "+++ Preparing raw data"
+        for station in tqdm(stations, desc=desc, unit="station"):
             st = read(os.path.join(
                 "DB",
                 f"{starttime.strftime('%Y%m%d')}_{endtime.strftime('%Y%m%d')}",
@@ -67,7 +78,7 @@ def prepareWaveforms(starttime, endtime, config):
     return True
 
 
-def prepareInventory(config, proj, st, et):
+def prepareInventory(config, proj, st, et, onsite=False):
     stationxml = os.path.join(
         "DB",
         f"{st.strftime('%Y%m%d')}_{et.strftime('%Y%m%d')}",
@@ -87,12 +98,13 @@ def prepareInventory(config, proj, st, et):
             })
             break
     station_df = DataFrame(station_df)
-    cx1 = station_df["longitude"] >= config["xlim_degree"][0]
-    cx2 = station_df["longitude"] < config["xlim_degree"][1]
-    cy1 = station_df["latitude"] >= config["ylim_degree"][0]
-    cy2 = station_df["latitude"] < config["ylim_degree"][1]
-    c = (cx1) & (cx2) & (cy1) & (cy2)
-    station_df = station_df[c]
+    if onsite:
+        cx1 = station_df["longitude"] >= config["xlim_degree"][0]
+        cx2 = station_df["longitude"] < config["xlim_degree"][1]
+        cy1 = station_df["latitude"] >= config["ylim_degree"][0]
+        cy2 = station_df["latitude"] < config["ylim_degree"][1]
+        c = (cx1) & (cx2) & (cy1) & (cy2)
+        station_df = station_df[c]
     station_df.reset_index(inplace=True, drop=True)
     station_df[["x(km)", "y(km)"]] = station_df.apply(
         lambda x: Series(
@@ -102,60 +114,3 @@ def prepareInventory(config, proj, st, et):
     station_dict = {station: (x, y) for station, x, y in zip(
         station_df["id"], station_df["x(km)"], station_df["y(km)"])}
     return station_df, station_dict
-
-
-def picks2DF(picks, pick_outfile):
-    outFile = os.path.join("results", pick_outfile)
-    pick_df = []
-    for pick in picks:
-        pick_df.append(
-            {"id": pick.trace_id,
-             "timestamp": pick.peak_time.datetime,
-             "prob": pick.peak_value,
-             "type": pick.phase.lower(),
-             "amp": nan,  # pick.phase_amplitude,
-             "phase_amp": nan  # pick.phase_amplitude
-             })
-    pick_df = DataFrame(pick_df)
-    pick_df.to_csv(outFile, index=False, float_format="%0.3f")
-
-
-def applyGaMMaConfig(config, stations):
-    method = {
-        "BGMM": 5,
-        "GMM": 1}
-    config["oversample_factor"] = method[config["method"]]
-    config["ncpu"] = os.cpu_count() - 2
-
-    config["vel"] = {"p": 6.0, "s": 6.0 / 1.75}
-    config["dims"] = ["x(km)", "y(km)", "z(km)"]
-    clon = config["center"][0]
-    clat = config["center"][1]
-    config["x(km)"] = (array(config["xlim_degree"]) -
-                       array(clon))*config["degree2km"]
-    config["y(km)"] = (array(config["ylim_degree"]) -
-                       array(clat))*config["degree2km"]
-    config["z(km)"] = (config["zlim_degree"][0], config["zlim_degree"][1])
-    config["bfgs_bounds"] = (
-        (config["x(km)"][0] - 1, config["x(km)"][1] + 1),
-        (config["y(km)"][0] - 1, config["y(km)"][1] + 1),
-        (config["z(km)"][0], config["z(km)"][1] + 1),
-        (None, None),
-    )
-
-    if config["useEikonal"]:
-        zz = config["zz"]
-        vp = config["vp"]
-        vp_vs_ratio = config["vp_vs_ratio"]
-        vs = [v / vp_vs_ratio for v in vp]
-        h = config["h"]
-        vel = {"z": zz, "p": vp, "s": vs}
-        config["eikonal"] = {"vel": vel,
-                             "h": h,
-                             "xlim": config["x(km)"],
-                             "ylim": config["y(km)"],
-                             "zlim": config["z(km)"]}
-    if config["dbscan_eps"] == "A":
-        config["dbscan_eps"] = estimate_eps(stations, config["vel"]["p"])
-
-    return config

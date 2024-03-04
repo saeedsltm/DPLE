@@ -16,6 +16,7 @@ def locateHypocenter(config):
     Path(locationPath).mkdir(parents=True, exist_ok=True)
     cmd = "cat results/*_*.out > results/all.out"
     os.system(cmd)
+    print("+++ Loading catalog ...")
     catalog = read_events(os.path.join("results", "all.out"))
     toSTATION0HYP(config, catalog)
     catalogs = glob(os.path.join("results", "all.out"))
@@ -30,8 +31,9 @@ def locateHypocenter(config):
         f.write("all.out\nn\n")
     cmd = "hyp < hyp.inp >/dev/null 2>/dev/null"
     os.system(cmd)
-    catalog2xyzm(config, "hyp.out", "hypocenter")
     cmd = "select select.inp >/dev/null 2>/dev/null"
     os.system(cmd)
-    setMagnitude("select.out", config)
+    if config["mag_estimation"]:
+        setMagnitude(f"{config['input_mag_file']}", config)
+    catalog2xyzm(config, "hyp.out", "hypocenter")
     os.chdir(root)

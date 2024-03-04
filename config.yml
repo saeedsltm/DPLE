@@ -1,7 +1,7 @@
 ---
 #============================ Data
-starttime: 2021-12-10T00:00:00
-endtime: 2022-01-20T00:00:00
+starttime: 2021-12-20T00:00:00
+endtime: 2021-12-21T00:00:00
 searchWindow: []
 # Selected region for downloading stations
 center: [56.25, 27.50]
@@ -17,24 +17,27 @@ fdsn_urls: ["http://localhost:8080"]
 stations_inv: stations.xml
 picks_file: results/picks.csv
 preprocess_data: true
-#============================ PhaseNet settings
-repick_data: true
-min_p_prob: 0.3
-min_s_prob: 0.3
-highpass_filter: 0.0
-model: "original"
-#============================ GaMMA settings
-degree2km: 111.19492474777779
-use_dbscan: true
-method: BGMM
-# Velocity Model, (Acarel et al, 2019)
-useEikonal: true
+#============================ Velocity model
 zz: [0.0, 2.0, 4.0, 10.0, 14.0, 19.0, 46.0]
 vp: [4.2, 5.4, 5.7,  5.9,  6.1,  6.5,  8.2]
 vp_vs_ratio: 1.75
-h: 3.0
+#============================ Picker settings
+picker: "PhaseNet" # PhaseNet, EQTransformer
+repick_data: true
+min_P_probability: 0.3
+min_S_probability: 0.3
+batch_size: 500
+overlap: 3000
+model: "original"
+model_update: false
+#============================ Association settings
+associator: "PyOcto" # GaMMA, PyOcto
+# GaMMA Associator
+use_dbscan: true
+method: "BGMM"
+useEikonal: true
 # DBSCAN
-dbscan_eps: 15 # The maximum time between two neighbor picks, A for auto set
+dbscan_eps: 15 # The maximum time between two neighbor picks
 dbscan_min_samples: 5 # The number neighbor to be considered as a core point
 # Filtering
 min_picks_per_eq: 5
@@ -44,6 +47,17 @@ max_sigma11: 1.5 # Max phase time residual (s)
 max_sigma22: 1.0 # Max phase amplitude residual (in log scale)
 max_sigma12: 1.0 # Max covariance term. (Usually not used)
 use_amplitude: false
+# PyOcto
+tolerance: 2.0
+association_cutoff_distance: 250
+time_before: 300
+n_picks: 5
+n_p_picks: 4
+n_s_picks: 1
+n_p_and_s_picks: 1
+#============================ Magnitude estimation (SeisComP)
+mag_estimation: true
+input_mag_file: "hyp.out" # select.out, hyp.out
 #============================ Visilization
 plotResults: true
 nTests: 3
@@ -51,7 +65,7 @@ minmaxRes: 2.0 # s
 maxDist: 75   # km
 statisticsBy: "hypocenter"
 #============================ Catalog export
-outCatFmt: ["NORDIC", "QUAKEML"]
+outCatFmt: ["NORDIC", "SC3ML"]
 #============================ Cross sections
 profiles:
   -
