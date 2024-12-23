@@ -15,6 +15,26 @@ from seisbench.util import PickList
 
 
 def runPicker(config):
+    min_p_prob = config["min_P_probability"]
+    min_s_prob = config["min_S_probability"]
+    batch_size = config["batch_size"]
+    overlap = config["overlap"]
+    ncpu = config["number_cpu"] or os.cpu_count() - 2
+    p_nam = config["picker"]
+    m_nam = config["model"]
+    m_upd = config["model_update"]
+    m_ver = config['model_version']
+    picker = eval(f"sbm.{p_nam}.from_pretrained('{m_nam}', update={m_upd}, version_str='{m_ver}')")
+    print("+++ Picker loaded. Here are the picker details:",
+          f"Picker: {p_nam}\nModel: {m_nam}\nupdate: {m_upd}\nversion_str: {m_ver}",
+          "Doc String:",
+          picker.weights_docstring,
+          sep='\n')
+    if cuda.is_available():
+        picker.cuda()
+        print("Running on GPU")
+    else:
+        print("Running on CPU")
     path = Path("results")
     path.mkdir(parents=True, exist_ok=True)
     startTime = config["starttime"]
@@ -36,18 +56,6 @@ def runPicker(config):
             stream = Stream()
             for s in chunkData:
                 stream += read(s)
-            min_p_prob = config["min_P_probability"]
-            min_s_prob = config["min_S_probability"]
-            batch_size = config["batch_size"]
-            overlap = config["overlap"]
-            ncpu = os.cpu_count() - 2
-            p_nam = config["picker"]
-            m_nam = config["model"]
-            m_upd = config["model_update"]
-            picker = sbm.PhaseNet.from_pretrained("original")
-            picker = eval(f"sbm.{p_nam}.from_pretrained('{m_nam}', update={m_upd})")
-            if cuda.is_available():
-                picker.cuda()
             picks = picker.classify(stream,
                                     overlap=overlap,
                                     batch_size=batch_size,
