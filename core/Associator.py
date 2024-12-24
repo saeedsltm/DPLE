@@ -186,6 +186,7 @@ def assocciateWithPyocto(config, st, et, proj):
     n_p_picks = config["n_p_picks"]
     n_s_picks = config["n_s_picks"]
     n_p_and_s_picks = config["n_p_and_s_picks"]
+    n_threads = config["number_cpu"] or os.cpu_count() - 2
     vp = array(config["vp"])
     z = array(config["zz"])
     vs = vp/config["vp_vs_ratio"]
@@ -214,6 +215,7 @@ def assocciateWithPyocto(config, st, et, proj):
         n_p_picks=n_p_picks,
         n_s_picks=n_s_picks,
         n_p_and_s_picks=n_p_and_s_picks,
+        n_threads=n_threads,
     )
     stations = associator.inventory_to_df(inv)
     events, assignments = associator.associate_seisbench(picks, stations)
