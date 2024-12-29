@@ -29,7 +29,9 @@ min_S_probability: 0.3
 batch_size: 500
 overlap: 3000
 model: "original"
+model_version: "latest" # "latest" or the version number string.
 model_update: false
+number_cpu: 5 # Maximum number of CPU cores that will be used. If set to None, total_number_cpu-2 will be used.
 #============================ Association settings
 associator: "PyOcto" # GaMMA, PyOcto
 # GaMMA Associator
